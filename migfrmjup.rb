@@ -103,7 +103,7 @@ def start_mig
     end
     if @tchoice.length !=0
       @tchoice.each do |x|
-      system("sqlite #{@tpath}/#{@trac[x.to_i-1]}/db/trac.db .dump | sqlite3 #{@tpath}/#{@trac[x.to_i-1]}/db/trac-#{@dumpfolder}.db && cp #{@tpath}/#{@trac[x.to_i-1]}/db/trac-#{@dumpfolder}.db #{@dumppath}/#{@trac[x.to_i-1]}.trac")
+      system("sqlite #{@tpath}/#{@trac[x.to_i-1]}/db/trac.db .dump | sqlite3 #{@tpath}/#{@trac[x.to_i-1]}/db/trac-#{@dumpfolder}.db && mv #{@tpath}/#{@trac[x.to_i-1]}/db/trac-#{@dumpfolder}.db #{@dumppath}/#{@trac[x.to_i-1]}.trac")
       end
     end
     if system("cd #{@path} && tar -cvf #{@dumpfolder}.tar #{@dumpfolder}")
