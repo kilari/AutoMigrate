@@ -18,8 +18,11 @@ def initialize
   @username =@host.to_s.scan(/^\w+/).to_s
   @srpath =@username.sub(/^/,"/home/svn/repositories/").to_sym
   @trpath = @username.sub(/^/,"/var/trac/").to_sym	
-  puts "Please place the pub key of this server on the destination server\n\n"
+  puts "Please place the pub key of this server on the destination server"
+  puts "=============="
   system("cat /root/.ssh/id_rsa.pub")
+  puts "=============="
+  self.fetch
 end
 
 def fetch
@@ -27,8 +30,8 @@ def fetch
   Dir.foreach(@spath.to_s){|x| @srepo << x if x !='.' && x !='..'}
   Dir.foreach(@tpath.to_s){|x| @trac << x if x !='.' && x !='..' }
   self.listing
-  rescue Exception => e
-  puts e
+  rescue #Exception => e
+  puts "\nERROR:Please check the User name you have entered"
   end
 end
 def listing
@@ -92,7 +95,7 @@ self.start_mig
 end
 
 def start_mig
-#  if @tchoice.length !=0||@schoice.length !=0
+    begin
     @dumpfolder  = Time.now.to_s.gsub(/\W/,'').slice(0..13)
     @dumppath = (@path +"/"+@dumpfolder).to_sym
     Dir.mkdir(@dumppath.to_s)
@@ -110,9 +113,10 @@ def start_mig
       puts "Successfully Packed"
       self.send_data	
     end
-#  else
-#    puts "No INPUT given"
-#  end
+   rescue Exception => e
+   puts e
+   self.rolloff
+   end
 end
 
 def send_data
@@ -121,9 +125,11 @@ def send_data
   puts "Dumps sent successfully to /root/#{@dumpfolder}.tar"
   self.rolloff
   self.after_send
-  rescue Exception => e
+  rescue #Exception => e
   self.rolloff
-  puts e
+  puts "\nERROR:Can't connect to the destination server"
+  puts "Please check the control panel URL and make sure you have added the key to that server"
+
   end
 end
 
@@ -165,4 +171,3 @@ end
 end
 
 mig = Migration.new
-mig.fetch
