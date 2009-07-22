@@ -3,6 +3,7 @@ require 'net/scp'
 require 'net/ssh'
 class Migration
 def initialize
+  begin 
   puts "Enter the svnrepository username(excluding 's_')\n"
   @path =gets.chomp.sub(/^/,'s_').sub(/^/,'/home/')#.sub(/$\n/,'')
   @spath = @path.sub(/$/,'/svn').to_sym
@@ -13,25 +14,17 @@ def initialize
   @tchoice = []
   @smap = {}
   @tmap = {}
-  puts "Enter the domain name for the control panel(xyz.sourcerepo.com)"
-  @host =gets.chomp.to_sym #sub(/$\n/,'').to_sym
-  @username =@host.to_s.scan(/^\w+/).to_s
-  @srpath =@username.sub(/^/,"/home/svn/repositories/").to_sym
-  @trpath = @username.sub(/^/,"/var/trac/").to_sym	
   puts "Please place the pub key of this server on the destination server"
   puts "=============="
   system("cat /root/.ssh/id_rsa.pub")
   puts "=============="
-  self.fetch
-end
-
-def fetch
-  begin
   Dir.foreach(@spath.to_s){|x| @srepo << x if x !='.' && x !='..'}
   Dir.foreach(@tpath.to_s){|x| @trac << x if x !='.' && x !='..' }
   self.listing
-  rescue #Exception => e
+  rescue 
   puts "\nERROR:Please check the User name you have entered"
+  puts "\nIf you want to re-enter the username enter yes else no"
+  retry if gets.chomp=="yes"
   end
 end
 def listing
@@ -70,7 +63,7 @@ if(@schoice.length !=0)
   puts "Listing the Repository name mapping"
   @schoice.each do |x| @smap["#{@srepo[x.to_i-1]}"] = "#{@srepo[x.to_i-1]}"end
   @smap.each{|x,y| puts x+ "\t-->\t" +y}
-  puts "\nDo you want to edit the mapping\n"
+  puts "\nDo you want to edit the mapping.Enter yes or no\n"
   if(gets.chomp=="yes")
   @smap.each{|x,y| print x+ "\t-->\t"
   @smap[x]=gets.chomp}
@@ -83,7 +76,7 @@ if(@tchoice.length !=0)
   @tchoice.each do |x| @tmap["#{@trac[x.to_i-1]}"] = "#{@trac[x.to_i-1]}"
 end
   @tmap.each{|x,y| puts x+ "\t-->\t" +y}
-  puts "\nDo you want to edit the Trac mapping\n"
+  puts "\nDo you want to edit the Trac mapping. Enter yes or no\n"
   if(gets.chomp=="yes")
   @tmap.each{|x,y| print x+ "\t-->\t"
   @tmap[x]=gets.chomp}
@@ -121,15 +114,21 @@ end
 
 def send_data
   begin
+  puts "Enter the domain name for the control panel(xyz.sourcerepo.com)"
+  @host =gets.chomp.to_sym #sub(/$\n/,'').to_sym
+  @username =@host.to_s.scan(/^\w+/).to_s
+  @srpath =@username.sub(/^/,"/home/svn/repositories/").to_sym
+  @trpath = @username.sub(/^/,"/var/trac/").to_sym
   Net::SCP.upload!(@host.to_s,:"root",@dumppath.id2name+".tar", "/root")
   puts "Dumps sent successfully to /root/#{@dumpfolder}.tar"
-  self.rolloff
   self.after_send
-  rescue #Exception => e
-  self.rolloff
+  rescue
   puts "\nERROR:Can't connect to the destination server"
   puts "Please check the control panel URL and make sure you have added the key to that server"
-
+  puts "\nDo you want to re-enter the control panel URL.Enter yes or no" 
+  retry if gets.chomp=="yes"
+  ensure
+  self.rolloff
   end
 end
 
